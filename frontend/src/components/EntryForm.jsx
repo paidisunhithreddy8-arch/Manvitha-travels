@@ -21,7 +21,7 @@ export default function EntryForm({ reminderId, onSave, onCancel }) {
   const [custPhone, setCustPhone] = useState('');
   const [custError, setCustError] = useState('');
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = 'https://manvitha-travels.onrender.com/api';
 
   useEffect(() => {
     fetchCustomers();

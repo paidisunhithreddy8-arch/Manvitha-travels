@@ -7,6 +7,11 @@ import ReportsDashboard from './components/ReportsDashboard';
 import Settings from './components/Settings';
 
 export default function App() {
+  const currentDate = new Date().toLocaleDateString('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric'
+});
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem('manivtha_authenticated') === 'true';
   });
@@ -24,7 +29,7 @@ export default function App() {
     return localStorage.getItem('manivtha_scratchpad') || 'E.g. Check driver status for Innova outstation trip.';
   });
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = 'https://manvitha-travels.onrender.com/api';
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -226,7 +231,7 @@ export default function App() {
       <aside className={`sidebar hide-on-print ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-brand">
           <div className="sidebar-logo">M</div>
-          <div className="sidebar-title">Manivtha CRM</div>
+          <div className="sidebar-title">Manivtha CRM </div>
         </div>
 
         {/* Office Staff Avatar widget */}
@@ -241,7 +246,7 @@ export default function App() {
         {/* Active Date Calendar widget */}
         <div className="date-calendar-widget">
           <div className="date-calendar-header">System Operations Date</div>
-          <div className="date-calendar-value">11 Jun 2026</div>
+          <div className="date-calendar-value">{currentDate}</div>
         </div>
 
         {/* Nav list */}
@@ -336,8 +341,8 @@ export default function App() {
             </div>
           </div>
           <div className="workspace-date">
-            Hyderabad Office | 11 June 2026
-          </div>
+  Hyderabad Office | {currentDate}
+</div>
         </header>
 
         {/* Page Content viewport */}

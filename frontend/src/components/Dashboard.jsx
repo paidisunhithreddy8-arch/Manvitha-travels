@@ -18,7 +18,7 @@ export default function Dashboard({ onAddClick, onEditClick, onViewClick }) {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 20;
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = 'https://manvitha-travels.onrender.com/api';
 
   useEffect(() => {
     fetchData();

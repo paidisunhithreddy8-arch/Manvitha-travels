@@ -10,13 +10,13 @@ app.use(cors());
 app.use(express.json());
 
 // Reference Date for calculations (as per system specs)
-const REFERENCE_DATE = '2026-06-11';
+const REFERENCE_DATE = new Date().toISOString().split('T')[0];
 
 // Data Sanitization Utility
 function sanitizeString(str) {
   if (typeof str !== 'string') return str;
   // Basic sanitization: strip HTML tags and trim whitespace
-  return str.replace(/<[^>]*>/g, '').trim();
+  return str.replace(/<[^>]*>/g, '').trim();npm 
 }
 
 // Data Validation Middleware for Reminders

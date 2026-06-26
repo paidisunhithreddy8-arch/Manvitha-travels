@@ -1,6 +1,6 @@
 // Node.js native fetch is used (supported in Node v18+)
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://manvitha-travels.onrender.com/api';
 
 async function runTests() {
   console.log('🚀 STARTING BACKEND INTEGRATION TESTS FOR CUSTOMER REMINDER SYSTEM...\n');

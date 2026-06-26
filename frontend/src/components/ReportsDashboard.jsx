@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 export default function ReportsDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = 'https://manvitha-travels.onrender.com/api';
 
   useEffect(() => {
     fetchReports();

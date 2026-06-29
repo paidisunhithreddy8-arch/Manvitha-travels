@@ -16,7 +16,7 @@ const REFERENCE_DATE = new Date().toISOString().split('T')[0];
 function sanitizeString(str) {
   if (typeof str !== 'string') return str;
   // Basic sanitization: strip HTML tags and trim whitespace
-  return str.replace(/<[^>]*>/g, '').trim();npm 
+  return str.replace(/<[^>]*>/g, '').trim();
 }
 
 // Data Validation Middleware for Reminders
@@ -367,7 +367,8 @@ app.get('/api/alerts/active', async (req, res) => {
     `);
 
     // Add calculations of days_until for the UI
-    const refDate = new Date(REFERENCE_DATE);
+    const refDate = new Date();
+refDate.setHours(0, 0, 0, 0);
     const enrichedAlerts = activeAlerts.map(alert => {
       const occDate = new Date(alert.occasion_date);
       let normalizedOccDateStr = alert.occasion_date;
@@ -487,61 +488,70 @@ app.get('/api/reports/summary', async (req, res) => {
 
 // --- CORE BUSINESS LOGIC PROCESSING ENGINE ---
 async function runBusinessLogicEngine(dbInstance) {
-  const refDate = new Date(REFERENCE_DATE); // '2026-06-11'
-  const refYear = refDate.getFullYear();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  // Query only Active reminders
-  const activeReminders = await dbInstance.all("SELECT * FROM customer_occasionbased_booking_remi WHERE status = 'Active'");
+  const currentYear = today.getFullYear();
+  const todayStr = today.toISOString().split('T')[0];
+
+  const activeReminders = await dbInstance.all(
+    "SELECT * FROM customer_occasionbased_booking_remi WHERE status = 'Active'"
+  );
 
   for (const reminder of activeReminders) {
     const occDate = new Date(reminder.occasion_date);
+
     if (isNaN(occDate.getTime())) continue;
 
-    let normalizedOccDateStr = reminder.occasion_date;
-    const occYear = occDate.getUTCFullYear();
+    let normalizedOccDate;
 
-    // If birthday or anniversary, map year to reference year (2026)
-    if (reminder.occasion_type === 'birthday' || reminder.occasion_type === 'anniversary' || occYear < refYear) {
-      const month = String(occDate.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(occDate.getUTCDate()).padStart(2, '0');
-      normalizedOccDateStr = `${refYear}-${month}-${day}`;
+    if (
+      reminder.occasion_type === 'birthday' ||
+      reminder.occasion_type === 'anniversary'
+    ) {
+      normalizedOccDate = new Date(
+        currentYear,
+        occDate.getMonth(),
+        occDate.getDate()
+      );
+    } else {
+      normalizedOccDate = new Date(reminder.occasion_date);
     }
 
-    const normalizedOccDate = new Date(normalizedOccDateStr);
-    
-    // Calculate days difference
-    const diffTime = normalizedOccDate.getTime() - refDate.getTime();
+    normalizedOccDate.setHours(0, 0, 0, 0);
+
+    const diffTime = normalizedOccDate.getTime() - today.getTime();
     const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    // Alert Conditions: occasion is between 0 and 7 days away
     if (daysUntil >= 0 && daysUntil <= 7) {
-      const urgency = daysUntil <= 2 ? 'Red' : 'Amber';
+      const urgency = daysUntil <= 4 ? 'Red' : 'Amber';
 
-      // Check if alert already exists for this reminder in the current year
-      const currentYear = REFERENCE_DATE.split('-')[0];
       const existingAlert = await dbInstance.get(
-        "SELECT id, urgency, status FROM alerts WHERE reminder_id = ? AND alert_date LIKE ?",
-        [reminder.id, `${currentYear}-%`]
+        "SELECT * FROM alerts WHERE reminder_id = ?",
+        [reminder.id]
       );
 
       if (!existingAlert) {
-        // Insert new alert
         await dbInstance.run(
-          `INSERT INTO alerts (reminder_id, alert_date, status, urgency) 
+          `INSERT INTO alerts (reminder_id, alert_date, status, urgency)
            VALUES (?, ?, 'Active', ?)`,
-          [reminder.id, REFERENCE_DATE, urgency]
+          [reminder.id, todayStr, urgency]
         );
-      } else if (existingAlert.status === 'Active' && existingAlert.urgency !== urgency) {
-        // Update urgency (e.g. from Amber to Red as date approaches)
+      } else {
         await dbInstance.run(
-          "UPDATE alerts SET urgency = ? WHERE id = ?",
-          [urgency, existingAlert.id]
+          `UPDATE alerts
+           SET status='Active',
+               urgency=?,
+               alert_date=?
+           WHERE id=?`,
+          [urgency, todayStr, existingAlert.id]
         );
       }
     } else {
-      // If occasion is passed or too far in future, dismiss active alerts automatically
       await dbInstance.run(
-        "UPDATE alerts SET status = 'Dismissed' WHERE reminder_id = ? AND status = 'Active'",
+        `UPDATE alerts
+         SET status='Dismissed'
+         WHERE reminder_id=?`,
         [reminder.id]
       );
     }
